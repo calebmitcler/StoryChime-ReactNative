@@ -1,25 +1,45 @@
-import { StyleSheet, TextInput, TouchableOpacity } from 'react-native';
-import { useState } from 'react';
+import { StyleSheet, TextInput, TouchableOpacity, Alert,  View } from 'react-native';
 import { router } from 'expo-router';
+import React, { useState } from 'react'
+import { supabase } from './supabase'
+import { Button, Input } from '@rneui/themed'
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleLogin = () => {
-    // TODO: Implement actual login logic
-    console.log('Login attempt with:', { email, password });
-    // Navigate to the tabs group
-    router.replace('/(tabs)/library');
-  };
 
-  const handleSignUp = () => {
-    // TODO: Implement sign up navigation
-    console.log('Navigate to sign up');
-  };
+  async function signInWithEmail() {
+    setLoading(true)
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
+    })
+    if (error === null) {
+      router.replace('/(tabs)/library');
+    }
+    
+
+    if (error) Alert.alert(error.message)
+    setLoading(false)
+  }
+  async function signUpWithEmail() {
+    setLoading(true)
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+    })
+    if (error) Alert.alert(error.message)
+    if (!session) Alert.alert('Please check your inbox for email verification!')
+    setLoading(false)
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -48,11 +68,11 @@ export default function LoginScreen() {
           placeholderTextColor="#666"
         />
 
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+        <TouchableOpacity style={styles.loginButton} onPress={signInWithEmail}>
           <ThemedText style={styles.buttonText}>Sign In</ThemedText>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
+        <TouchableOpacity style={styles.signUpButton} onPress={signUpWithEmail}>
           <ThemedText style={styles.signUpText}>Don't have an account? Sign Up</ThemedText>
         </TouchableOpacity>
       </ThemedView>
